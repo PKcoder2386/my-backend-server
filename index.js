@@ -130,11 +130,11 @@ app.post('/order', async (req, res) => {
 //Added: secure route to get all orders for your admin dashboard
 app.get('/api/admin/orders', async(req,res) => {
     try{
-        const orders = (await Order.find()).toSorted({dataCreated:-1});
-        res.status(200).json({success:true, data:order});
+        const orders = await Order.find({}).sort({dataCreated:-1});
+        res.json({success:true, data:orders});
     }catch(error){
         console.error("Error fetching admin orders:", error);
-        res.status(500).json({success:false, error:"failed to fetch orders"});
+        res.status(500).json({success:false, message:"Internal server Error loading admin order", error:error.message});
     }
 });
 
