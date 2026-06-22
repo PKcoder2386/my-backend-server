@@ -138,6 +138,29 @@ app.get('/api/admin/orders', async(req,res) => {
     }
 });
 
+// Add this route to your backend index.js file
+app.post("/api/admin/orders/update-payment", async (req, res) => {
+    try {
+        const { orderId, paymentStatus } = req.body;
+        
+        // Find order by its ID and update its paymentStatus field
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId, 
+            { paymentStatus: paymentStatus }, 
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.json({ success: true, message: "Payment status updated!", data: updatedOrder });
+    } catch (error) {
+        console.error("Error updating payment status:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
 // 2. Route to verify Razorpay Payment Signature
 app.post('/verify', async (req, res) => {
     try {
