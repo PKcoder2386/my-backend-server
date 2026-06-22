@@ -77,7 +77,7 @@ app.post('/api/orders/save', async (req, res) => {
         res.status(201).json({success: true, data: savedOrder});
         
     }catch(error){
-        console.errror("Error saving order:", error);
+        console.error("Error saving order:", error);
         res.status(500).json({success: false, error: "Failed to save order"});
 
     }
@@ -124,6 +124,17 @@ app.post('/order', async (req, res) => {
     } catch (error) {
         console.error("Error creating order:", error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+//Added: secure route to get all orders for your admin dashboard
+app.get('/api/admin/orders', async(req,res) => {
+    try{
+        const orders = (await Order.find()).toSorted({dataCreated:-1});
+        res.status(200).json({success:true, data:order});
+    }catch(error){
+        console.error("Error fetching admin orders:", error);
+        res.status(500).json({success:false, error:"failed to fetch orders"});
     }
 });
 
