@@ -139,14 +139,16 @@ app.get('/api/admin/orders', async(req,res) => {
 });
 
 // Add this route to your backend index.js file
+// Replace your update-payment route in backend index.js with this:
 app.post("/api/admin/orders/update-payment", async (req, res) => {
     try {
         const { orderId, paymentStatus } = req.body;
         
-        // Find order by its ID and update its paymentStatus field
+        // CRITICAL FIX: Use $set so MongoDB ONLY modifies paymentStatus
+        // and leaves the items array untouched!
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId, 
-            { paymentStatus: paymentStatus }, 
+            { $set: { paymentStatus: paymentStatus } }, 
             { new: true }
         );
 
