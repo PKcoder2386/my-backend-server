@@ -167,10 +167,16 @@ app.post("/api/admin/orders/update-payment", async (req, res) => {
 
 app.post("/api/admin/orders/update-delivery", async(req,res)=>{
     try{
-        const {order , deliveryStatus}= req.body;
+        const {orderId , deliveryStatus}= req.body;
+        
+        if(!orderId){
+            return res.status(400).json({success : false , message: "Missing orderId"});
+        }
+
+        const cleanId = orderId.trim();
 
         const updatedOrder = await Order.findByIdAndUpdate(
-            orderId,
+            cleanId,
             {$set: {deliveryStatus: deliveryStatus}},
             {new:true}
         );
@@ -190,9 +196,17 @@ app.delete('/api/admin/orders/:id', async (req,res)=>{
     try{
         const orderID = req.params.id;
 
-        const deleteOrder = await Order.findByIdAndDelete(orderId);
+        if(!orderID){
+            return res.status(400).json({success: false , message:"Missing orderId parameter"});
+        }
 
-        if(!deleteOrder){
+        const cleanId = orderID.trim();
+
+        const deletedOrder = await Order.findByIdAndDelete(cleanId);
+
+       
+
+        if(!deletedOrder){
             return res.status(404).json({success : false , message: "Order not found"});
         }
         res.json({success: true, message:"Order deleted successfully from database!"});
