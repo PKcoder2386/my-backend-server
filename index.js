@@ -103,6 +103,9 @@ app.post('/order', async (req, res) => {
             return res.status(400).json({ error: "Amount is required" });       
          }
 
+         const flatFeePaise=500;
+         const finalAmountPaise = Number(amount) + flatFeePaise;
+
         const razorpay = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID,
             key_secret: process.env.RAZORPAY_KEY_SECRET
@@ -111,7 +114,7 @@ app.post('/order', async (req, res) => {
         
 
         const options = {
-            amount:Number( amount), // Amount in paise
+            amount:finalAmountPaise, // Amount in paise
             currency: "INR",
             receipt:`receipt_${Date.now()}`
         };
@@ -219,7 +222,7 @@ app.delete('/api/admin/orders/:id', async (req,res)=>{
 // 2. Route to verify Razorpay Payment Signature
 app.post('/verify', async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customer,items,totalsAmount } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customer,items,totalAmount } = req.body;
 
         // Generate the expected signature using your Secret Key
         const sha = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
