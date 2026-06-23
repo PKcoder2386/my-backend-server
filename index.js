@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const mongodb = require('mongodb');
+const { type } = require('node:os');
 
 require('dotenv').config();
 
@@ -48,6 +49,7 @@ const orderSchema = new mongoose.Schema({
     totalAmount: Number,
     paymentMethod: String,
     paymentStatus: {type: String, default: "Pending"},
+    deliveryStatus:{type:String, default:"Pending"},
     razorpayPaymentID: {type: String, default: null},
     razorpayOrderID: {type: String, default: null},
     dataCreated: {type: Date, default: Date.now}
@@ -163,10 +165,47 @@ app.post("/api/admin/orders/update-payment", async (req, res) => {
     }
 });
 
+app.post("/api/admin/orders/update-delivery", async(req,res)=>{
+    try{
+        const {order , deliveryStatus}= req.body;
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            {$set: {deliveryStatus: deliveryStatus}},
+            {new:true}
+        );
+
+        if (!updatedOrder){
+            return res.status(404).json({success :false , message: "Order Not Found"});
+        }
+
+        res.json({success:true , message:"Delivery status updated successfully",data: updatedOrder});
+    }catch(error){
+        console.error("Error updating delivery status:", error);
+        res.status(500).json({success: false , message: "Internal server error"});
+    }
+});
+
+app.delete('/api/admin/orders/:id', async (req,res)=>{
+    try{
+        const orderID = req.params.id;
+
+        const deleteOrder = await Order.findByIdAndDelete(orderId);
+
+        if(!deleteOrder){
+            return res.status(404).json({success : false , message: "Order not found"});
+        }
+        res.json({success: true, message:"Order deleted successfully from database!"});
+    }catch(error){
+        console.error("Error deleting order:", error);
+        res.status(500).json({success: false , message :"Internal server error"});
+    }
+});
+
 // 2. Route to verify Razorpay Payment Signature
 app.post('/verify', async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customer,items,totalsAmount } = req.body;
 
         // Generate the expected signature using your Secret Key
         const sha = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
@@ -176,7 +215,20 @@ app.post('/verify', async (req, res) => {
         // Authenticate the payment signature
         if (expectedSignature === razorpay_signature) {
             console.log("Payment verification successful!");
-            return res.json({ status: "success", message: "Payment verified successfully" });
+
+            const newOrder = new Order({
+                customer,
+                items,
+                totalAmount,
+                paymentMethod:"Online payment",
+                paymentStatus:"Paid",
+                razorpayPaymentID:razorpay_payment_id,
+                razorpayOrderID: razorpay_order_id
+            });
+
+            const saveOrder = await newOrder.save();
+
+            return res.json({ status: "success", message: "Payment verified successfully", data:saveOrder });
         } else {
             console.log("Payment verification failed!");
             return res.status(400).json({ status: "failure", message: "Invalid signature match" });
