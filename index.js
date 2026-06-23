@@ -103,7 +103,7 @@ app.post('/order', async (req, res) => {
             return res.status(400).json({ error: "Amount is required" });       
          }
 
-         const flatFeePaise=500;
+         const flatFeePaise=100;
          const finalAmountPaise = Number(amount) + flatFeePaise;
 
         const razorpay = new Razorpay({
